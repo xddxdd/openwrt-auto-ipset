@@ -6,9 +6,33 @@ START=99
 USE_PROCD=1
 PROG=/root/auto-ipset.sh
 
+_add_instance() {
+    IPSET=$1
+    URL=$2
+
+    ipset create "${IPSET}_v4" hash:net family inet hashsize 1024 maxelem 1048576 || true
+    ipset create "${IPSET}_v6" hash:net family inet6 hashsize 1024 maxelem 1048576 || true
+    iptables -A INPUT -m set --match-set "${IPSET}_v4" src -j DROP || true
+    ip6tables -A INPUT -m set --match-set "${IPSET}_v6" src -j DROP || true
+
+    procd_open_instance
+    procd_set_param command "$PROG" "$IPSET" "$URL"
+    procd_set_param respawn
+    procd_close_instance
+}
+
+_del_instance() {
+    IPSET=$1
+    iptables -D INPUT -m set --match-set "${IPSET}_v4" src -j DROP || true
+    ip6tables -D INPUT -m set --match-set "${IPSET}_v6" src -j DROP || true
+    ipset destroy "${IPSET}_v4" || true
+    ipset destroy "${IPSET}_v6" || true
+}
+
 start_service() {
-	procd_open_instance
-	procd_set_param command "$PROG" btn https://github.com/PBH-BTN/BTN-Collected-Rules/raw/refs/heads/main/combine/all.txt
-	procd_set_param respawn
-	procd_close_instance
+    _add_instance btn https://github.com/PBH-BTN/BTN-Collected-Rules/raw/refs/heads/main/combine/all.txt
+}
+
+stop_service() {
+    _del_instance btn
 }
