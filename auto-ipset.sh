@@ -15,7 +15,7 @@ while true; do
     }
 
     {
-        IPV4=$(grep -E "^[0-9\.]+$" "$TMP_FILE")
+        IPV4=$(grep -E "^[0-9\./]+$" "$TMP_FILE")
         echo "flush ${IPSET}_v4"
         for IP in $IPV4; do
             echo "add ${IPSET}_v4 ${IP}"
@@ -23,7 +23,7 @@ while true; do
     } | ipset restore -!
 
     {
-        IPV6=$(grep -E "^[0-9a-f:\\.]*:[0-9a-f:\\.]*$" "$TMP_FILE")
+        IPV6=$(grep -E "^[0-9a-f:\\./]*:[0-9a-f:\\./]*$" "$TMP_FILE")
         echo "flush ${IPSET}_v6"
         for IP in $IPV6; do
             echo "add ${IPSET}_v6 ${IP}"
